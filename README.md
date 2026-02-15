@@ -52,90 +52,180 @@ Tambien puedes declararlo directo en tu `package.json`:
 
 ## Uso en JavaScript
 
-### 1) Busqueda general (Promise / async-await)
+### 1) Forma corta (string)
 
 ```js
 const ytSearch = require('yt-search')
 
 async function main() {
-  const result = await ytSearch({
-    query: 'lofi hip hop',
-    hl: 'en',
-    gl: 'US'
-  })
-
-  console.log('Videos:', result.videos.length)
-  console.log('Canales:', result.channels.length)
-  console.log('Playlists:', result.playlists.length)
-  console.log('En vivo:', result.live.length)
-
-  const first = result.videos[0]
-  if (first) {
-    console.log('Primer video:', first.title)
-    console.log('URL:', first.url)
-  }
+  const result = await ytSearch('lofi hip hop')
+  console.log(result.videos.length)
 }
 
 main().catch(console.error)
 ```
 
-### 2) Busqueda simple con string
+### 2) Forma objeto con `query`
 
 ```js
 const ytSearch = require('yt-search')
 
-ytSearch('ambient focus music')
-  .then((r) => {
-    console.log('Resultados:', r.videos.length)
-  })
-  .catch(console.error)
+const result = await ytSearch({
+  query: 'ambient focus music'
+})
+
+console.log('Videos:', result.videos.length)
+console.log('Canales:', result.channels.length)
+console.log('Playlists:', result.playlists.length)
+console.log('Live:', result.live.length)
 ```
 
-### 3) Modo callback (compatibilidad)
+### 3) Alias de busqueda: `search`
+
+```js
+const ytSearch = require('yt-search')
+
+const result = await ytSearch({
+  search: 'drum and bass mix'
+})
+
+console.log(result.videos[0]?.title)
+```
+
+### 4) Alias de busqueda: `q`
+
+```js
+const ytSearch = require('yt-search')
+
+const result = await ytSearch({
+  q: 'synthwave 80s'
+})
+
+console.log(result.videos[0]?.url)
+```
+
+### 5) Con opciones regionales y timeout (`hl`, `gl`, `timeout`)
+
+```js
+const ytSearch = require('yt-search')
+
+const result = await ytSearch({
+  query: 'reggaeton old school',
+  hl: 'es',
+  gl: 'MX',
+  timeout: 60000
+})
+
+console.log(result.query)
+console.log(result.videos.length)
+```
+
+### 6) Modo callback con string
 
 ```js
 const ytSearch = require('yt-search')
 
 ytSearch('chill beats', (err, data) => {
   if (err) return console.error(err)
-  console.log('Top result:', data.videos[0]?.title)
+  console.log('Top:', data.videos[0]?.title)
 })
 ```
 
-### 4) Obtener metadata de un video por `videoId`
+### 7) Modo callback con objeto
 
 ```js
 const ytSearch = require('yt-search')
 
-async function getVideo() {
-  const info = await ytSearch({
-    videoId: 'dQw4w9WgXcQ'
-  })
-
-  console.log(info.title)
-  console.log(info.duration)
-  console.log(info.views)
-}
-
-getVideo().catch(console.error)
+ytSearch({ query: 'house music', hl: 'en', gl: 'US' }, (err, data) => {
+  if (err) return console.error(err)
+  console.log('Playlists:', data.playlists.length)
+})
 ```
 
-### 5) Obtener datos de playlist por `listId`
+### 8) Obtener metadata de un video (`videoId`)
 
 ```js
 const ytSearch = require('yt-search')
 
-async function getPlaylist() {
-  const p = await ytSearch({
-    listId: 'PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI'
-  })
+const info = await ytSearch({
+  videoId: 'dQw4w9WgXcQ'
+})
 
-  console.log('Playlist:', p.title)
-  console.log('Videos:', p.videos.length)
-  console.log('Primero:', p.videos[0]?.title)
+console.log(info.type)        // "video"
+console.log(info.title)
+console.log(info.duration)    // { seconds, timestamp }
+console.log(info.views)
+console.log(info.author)
+```
+
+### 9) Obtener playlist por ID (`listId`)
+
+```js
+const ytSearch = require('yt-search')
+
+const playlist = await ytSearch({
+  listId: 'PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI'
+})
+
+console.log(playlist.type)      // "playlist"
+console.log(playlist.title)
+console.log(playlist.videos.length)
+console.log(playlist.videos[0])
+```
+
+### 10) Metodo directo: `ytSearch.search(query, opts)`
+
+```js
+const ytSearch = require('yt-search')
+
+const result = await ytSearch.search('jazz lofi', {
+  hl: 'en',
+  gl: 'US',
+  timeout: 45000
+})
+
+console.log(result.videos.length)
+```
+
+### 11) Metodo directo: `ytSearch.video(videoId, opts)`
+
+```js
+const ytSearch = require('yt-search')
+
+const video = await ytSearch.video('dQw4w9WgXcQ', {
+  hl: 'en',
+  gl: 'US',
+  timeout: 45000
+})
+
+console.log(video.title)
+```
+
+### 12) Metodo directo: `ytSearch.playlist(listId, opts)`
+
+```js
+const ytSearch = require('yt-search')
+
+const p = await ytSearch.playlist('PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI', {
+  hl: 'en',
+  gl: 'US',
+  timeout: 45000
+})
+
+console.log(p.title)
+```
+
+### 13) Manejo de errores recomendado
+
+```js
+const ytSearch = require('yt-search')
+
+try {
+  const result = await ytSearch({ query: 'test' })
+  console.log(result.videos.length)
+} catch (err) {
+  console.error('Fallo:', err.message)
 }
-
-getPlaylist().catch(console.error)
 ```
 
 ---
@@ -144,15 +234,23 @@ getPlaylist().catch(console.error)
 
 - `ytSearch(queryString)`
 - `ytSearch({ query, hl, gl, timeout })`
+- `ytSearch({ search, hl, gl, timeout })`
+- `ytSearch({ q, hl, gl, timeout })`
 - `ytSearch({ videoId, hl, gl, timeout })`
 - `ytSearch({ listId, hl, gl, timeout })`
-- `ytSearch(input, callback)`
+- `ytSearch(input, callback)` 
 
 Metodos directos:
 
 - `ytSearch.search(query, opts)`
 - `ytSearch.video(videoId, opts)`
 - `ytSearch.playlist(listId, opts)`
+
+Prioridad interna de opciones:
+
+- Si envias `videoId`, se usa modo video.
+- Si no hay `videoId` pero hay `listId`, se usa modo playlist.
+- Si no hay `videoId` ni `listId`, usa `query || search || q`.
 
 ---
 
